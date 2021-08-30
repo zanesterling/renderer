@@ -1,6 +1,5 @@
 extern crate sdl2;
 
-use sdl2::pixels::Color;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use std::time::Duration;
@@ -69,5 +68,57 @@ fn draw_stuff(screen: &mut draw::Screen) {
         data::PointScreen { x: 50, y: 50 },
         10,
         data::Color::RED
+    );
+
+    draw::draw_line(
+        screen,
+        data::PointScreen { x: 400, y: 300},
+        data::PointScreen { x: 400-50, y: 300-100},
+        data::Color::GREEN
+    );
+    draw::draw_line(
+        screen,
+        data::PointScreen { x: 400, y: 300},
+        data::PointScreen { x: 400-100, y: 300-50},
+        data::Color::GREEN
+    );
+
+    draw::draw_line(
+        screen,
+        data::PointScreen { x: 400, y: 300},
+        data::PointScreen { x: 400-50, y: 300+100},
+        data::Color::GREEN
+    );
+    draw::draw_line(
+        screen,
+        data::PointScreen { x: 400, y: 300},
+        data::PointScreen { x: 400-100, y: 300+50},
+        data::Color::GREEN
+    );
+
+    draw::draw_line(
+        screen,
+        data::PointScreen { x: 400, y: 300},
+        data::PointScreen { x: 400+50, y: 300-100},
+        data::Color::GREEN
+    );
+    draw::draw_line(
+        screen,
+        data::PointScreen { x: 400, y: 300},
+        data::PointScreen { x: 400+100, y: 300-50},
+        data::Color::GREEN
+    );
+
+    draw::draw_line(
+        screen,
+        data::PointScreen { x: 400, y: 300},
+        data::PointScreen { x: 400+50, y: 300+100},
+        data::Color::GREEN
+    );
+    draw::draw_line(
+        screen,
+        data::PointScreen { x: 400, y: 300},
+        data::PointScreen { x: 400+100, y: 300+50},
+        data::Color::GREEN
     );
 }

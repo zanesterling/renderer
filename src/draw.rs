@@ -45,3 +45,52 @@ pub fn draw_point(screen: &mut Screen, point: PointScreen, w: usize, color: Colo
         }
     }
 }
+
+pub fn draw_line(
+    screen: &mut Screen,
+    mut p1: PointScreen,
+    mut p2: PointScreen,
+    color: Color
+) {
+    if p2.x < p1.x {
+        let tmp = p1;
+        p1 = p2;
+        p2 = tmp;
+    }
+
+    let mut x1 = p1.x as isize;
+    let mut x2 = p2.x as isize;
+    let mut y1 = p1.y as isize;
+    let mut y2 = p2.y as isize;
+    let mut dx: isize = x2 - x1;
+    let mut dy: isize = y2 - y1;
+
+    if dx.abs() >= dy.abs() {
+        for x in 0..dx+1 {
+            let y = y1 + x * dy / dx;
+            set_px_safe(screen, color,
+                PointScreen {
+                    x: (x1 + x) as usize,
+                    y: y as usize
+                });
+        }
+    } else {
+        if (p2.x < p1.x && p2.y >= p1.y) || (p2.x >= p1.x && p2.y < p1.y) {
+            let (tx1, ty1) = (x1, y1);
+            x1 = x2;
+            y1 = y2;
+            x2 = tx1;
+            y2 = ty1;
+            dx *= -1;
+            dy *= -1;
+        }
+        for y in 0..dy+1 {
+            let x = x1 + y * dx / dy;
+            set_px_safe(screen, color,
+                PointScreen {
+                    x: x as usize,
+                    y: (y1 + y) as usize
+                });
+        }
+    }
+}
