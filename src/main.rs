@@ -121,4 +121,19 @@ fn draw_stuff(screen: &mut draw::Screen) {
         data::PointScreen { x: 400+100, y: 300+50},
         data::Color::GREEN
     );
+
+    draw::draw_triangle(
+        screen,
+        data::PointScreen {x: 100, y: 200},
+        data::PointScreen {x:  50, y: 250},
+        data::PointScreen {x: 150, y: 300},
+        data::Color::WHITE
+    );
+    draw::draw_triangle(
+        screen,
+        data::PointScreen {x: 100, y: 400},
+        data::PointScreen {x: 150, y: 450},
+        data::PointScreen {x:  50, y: 500},
+        data::Color::WHITE
+    );
 }
