@@ -46,8 +46,8 @@ fn main() {
 
             // Blit!
             copy_screen_data(&screen, &mut draw_data);
-            texture.update(None, &draw_data, 800*4);
-            canvas.copy(&texture, None, None);
+            texture.update(None, &draw_data, 800*4).unwrap();
+            canvas.copy(&texture, None, None).unwrap();
         }
 
         canvas.present();
@@ -57,9 +57,9 @@ fn main() {
 
 fn copy_screen_data(screen: &draw::Screen, out: &mut Vec<u8>) {
     for i in 0..screen.w * screen.h {
-        out[i*4    ] = screen.data[i].r;
+        out[i*4    ] = screen.data[i].b;
         out[i*4 + 1] = screen.data[i].g;
-        out[i*4 + 2] = screen.data[i].b;
+        out[i*4 + 2] = screen.data[i].r;
     }
 }
 
@@ -68,6 +68,6 @@ fn draw_stuff(screen: &mut draw::Screen) {
         screen,
         data::PointScreen { x: 50, y: 50 },
         10,
-        data::Color::WHITE
+        data::Color::RED
     );
 }
