@@ -42,12 +42,7 @@ fn main() {
         }
 
         {
-            draw::draw_point(
-                &mut screen,
-                data::PointScreen { x: 50, y: 50 },
-                10,
-                data::Color::WHITE
-            );
+            draw_stuff(&mut screen);
 
             // Blit!
             copy_screen_data(&screen, &mut draw_data);
@@ -66,4 +61,13 @@ fn copy_screen_data(screen: &draw::Screen, out: &mut Vec<u8>) {
         out[i*4 + 1] = screen.data[i].g;
         out[i*4 + 2] = screen.data[i].b;
     }
+}
+
+fn draw_stuff(screen: &mut draw::Screen) {
+    draw::draw_point(
+        screen,
+        data::PointScreen { x: 50, y: 50 },
+        10,
+        data::Color::WHITE
+    );
 }
