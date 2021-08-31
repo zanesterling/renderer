@@ -1,5 +1,9 @@
+color
+255 0 0
 point
 50 50 0 10
+color
+0 255 0
 line
 400 300 0 350 200 0
 line
@@ -16,6 +20,8 @@ line
 400 300 0 450 400 0
 line
 400 300 0 500 350 0
+color
+255 255 255
 triangle
 100 200 0 50 250 0 150 300 0
 triangle

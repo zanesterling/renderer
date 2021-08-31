@@ -19,7 +19,7 @@ pub enum Command {
     // Scale(f32, f32, f32),
     // Rotate(Point3, f32),
 
-    // Color(Color),
+    Color(Color),
 }
 
 pub fn load_scene(path: &str) -> Result<Scene, String> {
@@ -101,9 +101,26 @@ fn parse_cmd_scale(_lines: &mut io::Lines<io::BufReader<File>>) -> Result<Comman
 fn parse_cmd_rotate(_lines: &mut io::Lines<io::BufReader<File>>) -> Result<Command, String> { unimplemented!() }
 
 fn parse_cmd_color(
-    _lines: &mut io::Lines<io::BufReader<File>>
+    lines: &mut io::Lines<io::BufReader<File>>
 ) -> Result<Command, String> {
-    unimplemented!()
+    let l = lines.next().ok_or(ran_out_of_lines("line"))?;
+    let l = l.map_err(|e| e.to_string())?;
+    let xs = parse_n_u8s(3, l)?;
+    Ok(Command::Color(Color { r: xs[0], g: xs[1], b: xs[2] }))
+}
+
+fn parse_n_u8s(
+    n: usize,
+    line: String,
+) -> Result<Vec<u8>, String> {
+    let xs: Vec<u8> = line.split(" ")
+        .map(|s| s.parse())
+        .collect::<Result<Vec<u8>, _>>()
+        .map_err(|e| e.to_string())?;
+    if xs.len() == n {
+        return Ok(xs);
+    }
+    Err(format!("expected {} u8s, found {}", n, xs.len()))
 }
 
 fn parse_n_floats(

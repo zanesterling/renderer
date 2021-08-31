@@ -70,11 +70,12 @@ fn copy_screen_data(screen: &draw::Screen, out: &mut Vec<u8>) {
 }
 
 fn draw_scene(screen: &mut draw::Screen, scene: &parser::Scene) {
-    let color = data::Color::WHITE;
     fn ps(p: &data::Point3) -> data::PointScreen {
         data::PointScreen { x: p.x as usize, y: p.y as usize}
     }
     use crate::parser::Command;
+
+    let mut color = data::Color::WHITE;
 
     for cmd in &scene.commands {
         match cmd {
@@ -84,6 +85,8 @@ fn draw_scene(screen: &mut draw::Screen, scene: &parser::Scene) {
                 draw::draw_line(screen, ps(p1), ps(p2), color),
             Command::Triangle(p1, p2, p3) =>
                 draw::draw_triangle(screen, ps(p1), ps(p2), ps(p3), color),
+
+            Command::Color(c) => color = *c,
 
             _ => println!("command not implemented: {:?}", cmd)
         }
