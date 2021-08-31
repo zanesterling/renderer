@@ -159,12 +159,13 @@ fn fill_flat_top_tri(
 
     let dx1 = bot.x as isize - mid.x  as isize;
     let dx2 = bot.x as isize - mid2.x as isize;
-    let dy1 = bot.y as isize - mid.y  as isize;
-    let dy2 = bot.y as isize - mid2.y as isize;
+    let dy  = bot.y as isize - mid.y  as isize;
 
-    for i in 0..dy1+1 {
-        let lt_x = mid.x  as isize + i * dx1 / dy1;
-        let rt_x = mid2.x as isize + i * dx2 / dy2;
+    if dy == 0 { return; }
+
+    for i in 0..dy+1 {
+        let lt_x = mid.x  as isize + i * dx1 / dy;
+        let rt_x = mid2.x as isize + i * dx2 / dy;
         fill_row(screen, mid.y + i, lt_x, rt_x, color);
     }
 }
@@ -184,12 +185,13 @@ fn fill_flat_bot_tri(
 
     let dx1 = mid.x  as isize - top.x as isize;
     let dx2 = mid2.x as isize - top.x as isize;
-    let dy1 = mid.y  as isize - top.y as isize;
-    let dy2 = mid2.y as isize - top.y as isize;
+    let dy = mid.y  as isize - top.y as isize;
 
-    for i in 0..dy1+1 {
-        let lt_x = top.x as isize + i * dx1 / dy1;
-        let rt_x = top.x as isize + i * dx2 / dy2;
+    if dy == 0 { return; }
+
+    for i in 0..dy+1 {
+        let lt_x = top.x as isize + i * dx1 / dy;
+        let rt_x = top.x as isize + i * dx2 / dy;
         fill_row(screen, top.y + i, lt_x, rt_x, color);
     }
 }

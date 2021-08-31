@@ -97,6 +97,7 @@ fn draw_scene(screen: &mut draw::Screen, scene: &parser::Scene) {
                 t = Transform::scale(*x, *y, *z) * t,
             Command::Translate(x, y, z) =>
                 t = Transform::translate(*x, *y, *z) * t,
+            Command::Identity => t = Transform::IDENTITY,
 
             Command::Color(c) => color = *c,
 

@@ -1,10 +1,20 @@
+# Split into four panels.
+line
+400 0 0 400 600 0
+line
+0 300 0 800 300 0
+
+
+# # Panel 1 # #
+
 scale
 100 -100 1
 translate
-400 300 0
+200 150 0
 
+# axes
 color
-0 0 255
+255 0 0
 line
 0 0 0 -1 0 0
 line
@@ -13,15 +23,126 @@ line
 0 0 0 1 0 0
 line
 0 0 0 0 1 0
-
 color
 255 0 0
 point
 0 0 0 3
-
 color
 0 255 0
 point
 1 0 0 5
 point
 0 1 0 5
+
+color
+255 255 255
+triangle
+0.1 0.1 0 0.8 0.1 0 0.8 0.8 0
+
+
+# # Panel 2 # #
+
+identity
+scale
+100 100 1
+translate
+200 450 0
+
+# axes
+color
+255 0 0
+line
+0 0 0 -1 0 0
+line
+0 0 0 0 -1 0
+line
+0 0 0 1 0 0
+line
+0 0 0 0 1 0
+color
+255 0 0
+point
+0 0 0 3
+color
+0 255 0
+point
+1 0 0 5
+point
+0 1 0 5
+
+color
+255 255 255
+triangle
+0.1 0.1 0 0.8 0.1 0 0.8 0.8 0
+
+
+# # Panel 3 # #
+
+identity
+scale
+-100 -100 1
+translate
+600 150 0
+
+# axes
+color
+255 0 0
+line
+0 0 0 -1 0 0
+line
+0 0 0 0 -1 0
+line
+0 0 0 1 0 0
+line
+0 0 0 0 1 0
+color
+255 0 0
+point
+0 0 0 3
+color
+0 255 0
+point
+1 0 0 5
+point
+0 1 0 5
+
+color
+255 255 255
+triangle
+0.1 0.1 0 0.8 0.1 0 0.8 0.8 0
+
+
+# # Panel 4 # #
+
+identity
+scale
+-100 100 1
+translate
+600 450 0
+
+# axes
+color
+255 0 0
+line
+0 0 0 -1 0 0
+line
+0 0 0 0 -1 0
+line
+0 0 0 1 0 0
+line
+0 0 0 0 1 0
+color
+255 0 0
+point
+0 0 0 3
+color
+0 255 0
+point
+1 0 0 5
+point
+0 1 0 5
+
+color
+255 255 255
+triangle
+0.1 0.1 0 0.8 0.1 0 0.8 0.8 0

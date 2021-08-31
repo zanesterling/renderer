@@ -15,6 +15,7 @@ pub enum Command {
     Line(Point3, Point3),
     Triangle(Point3, Point3, Point3),
 
+    Identity,
     Translate(f32, f32, f32),
     Scale(f32, f32, f32),
     // Rotate(Point3, f32),
@@ -47,6 +48,7 @@ pub fn load_scene(path: &str) -> Result<Scene, String> {
             "line"     => parse_cmd_line(&mut lines),
             "triangle" => parse_cmd_triangle(&mut lines),
 
+            "identity"  => Ok(Command::Identity),
             "translate" => parse_cmd_translate(&mut lines),
             "scale"     => parse_cmd_scale(&mut lines),
             "rotate"    => parse_cmd_rotate(&mut lines),
