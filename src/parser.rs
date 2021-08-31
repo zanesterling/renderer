@@ -35,8 +35,14 @@ pub fn load_scene(path: &str) -> Result<Scene, String> {
             Some(Ok(l)) => l
         };
 
-        let cmd = line.split(" ").next().ok_or("line \"{}\" does not have a command")?;
+        if line == "" { continue }
+        let cmd = line.trim()
+            .split(" ")
+            .next()
+            .ok_or("line \"{}\" does not have a command")?;
         let cmd = match cmd {
+            "#" => continue 'foo,
+
             "point"    => parse_cmd_point(&mut lines),
             "line"     => parse_cmd_line(&mut lines),
             "triangle" => parse_cmd_triangle(&mut lines),

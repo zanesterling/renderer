@@ -1,7 +1,10 @@
+# Draw a red point.
 color
 255 0 0
 point
 50 50 0 10
+
+# Draw some green lines.
 color
 0 255 0
 line
@@ -20,6 +23,8 @@ line
 400 300 0 450 400 0
 line
 400 300 0 500 350 0
+
+# Draw some white triangles.
 color
 255 255 255
 triangle
