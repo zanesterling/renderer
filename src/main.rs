@@ -82,25 +82,10 @@ fn draw_scene(screen: &mut draw::Screen, scene: &parser::Scene) {
                 draw::draw_point(screen, ps(p), *w as usize, color),
             Command::Line(p1, p2) =>
                 draw::draw_line(screen, ps(p1), ps(p2), color),
+            Command::Triangle(p1, p2, p3) =>
+                draw::draw_triangle(screen, ps(p1), ps(p2), ps(p3), color),
 
             _ => println!("command not implemented: {:?}", cmd)
         }
     }
-}
-
-fn draw_stuff(screen: &mut draw::Screen) {
-    draw::draw_triangle(
-        screen,
-        data::PointScreen {x: 100, y: 200},
-        data::PointScreen {x:  50, y: 250},
-        data::PointScreen {x: 150, y: 300},
-        data::Color::WHITE
-    );
-    draw::draw_triangle(
-        screen,
-        data::PointScreen {x: 100, y: 400},
-        data::PointScreen {x: 150, y: 450},
-        data::PointScreen {x:  50, y: 500},
-        data::Color::WHITE
-    );
 }

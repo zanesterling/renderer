@@ -13,7 +13,7 @@ pub struct Scene {
 pub enum Command {
     Point(Point3, f32),
     Line(Point3, Point3),
-    Trig(Point3, Point3, Point3),
+    Triangle(Point3, Point3, Point3),
 
     Translate(f32, f32, f32),
     Scale(f32, f32, f32),
@@ -83,30 +83,27 @@ fn parse_cmd_line(
     ))
 }
 
-fn parse_cmd_triangle(lines: &mut io::Lines<io::BufReader<File>>) -> Result<Command, String> { Err("not implemented".to_string()) }
+fn parse_cmd_triangle(
+    lines: &mut io::Lines<io::BufReader<File>>
+) -> Result<Command, String> {
+    let l = lines.next().ok_or(ran_out_of_lines("line"))?;
+    let l = l.map_err(|e| e.to_string())?;
+    let fs = parse_n_floats(9, l)?;
+    Ok(Command::Triangle(
+        Point3 { x: fs[0], y: fs[1], z: fs[2] },
+        Point3 { x: fs[3], y: fs[4], z: fs[5] },
+        Point3 { x: fs[6], y: fs[7], z: fs[8] }
+    ))
+}
 
-fn parse_cmd_translate(lines: &mut io::Lines<io::BufReader<File>>) -> Result<Command, String> { Err("not implemented".to_string()) }
-fn parse_cmd_scale(lines: &mut io::Lines<io::BufReader<File>>) -> Result<Command, String> { Err("not implemented".to_string()) }
-fn parse_cmd_rotate(lines: &mut io::Lines<io::BufReader<File>>) -> Result<Command, String> { Err("not implemented".to_string()) }
+fn parse_cmd_translate(lines: &mut io::Lines<io::BufReader<File>>) -> Result<Command, String> { unimplemented!() }
+fn parse_cmd_scale(lines: &mut io::Lines<io::BufReader<File>>) -> Result<Command, String> { unimplemented!() }
+fn parse_cmd_rotate(lines: &mut io::Lines<io::BufReader<File>>) -> Result<Command, String> { unimplemented!() }
 
 fn parse_cmd_color(
     lines: &mut io::Lines<io::BufReader<File>>
 ) -> Result<Command, String> {
     Err("not implemented".to_string())
-}
-
-fn parse_n_u8s(
-    n: usize,
-    line: String,
-) -> Result<Vec<u8>, String> {
-    let xs: Vec<u8> = line.split(" ")
-        .map(|s| s.parse())
-        .collect::<Result<Vec<u8>, _>>()
-        .map_err(|e| e.to_string())?;
-    if xs.len() == n {
-        return Ok(xs);
-    }
-    Err(format!("expected {} floats, found {}", n, xs.len()))
 }
 
 fn parse_n_floats(
