@@ -103,7 +103,7 @@ pub fn draw_triangle(
     color: Color
 ) {
     let (bot, mid, top) = {
-        let (mut p1, mut p2, mut p3) = (p1, p2, p3);
+        let (p1, p2, p3) = (p1, p2, p3);
         if p1.y >= p2.y {
             if p1.y >= p3.y {
                 if p2.y >= p3.y { (p1, p2, p3) }
