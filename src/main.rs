@@ -78,7 +78,10 @@ fn draw_scene(screen: &mut draw::Screen, scene: &parser::Scene) {
 
     for cmd in &scene.commands {
         match cmd {
-            Command::Line(p1, p2) => draw::draw_line(screen, ps(p1), ps(p2), color),
+            Command::Point(p, w) =>
+                draw::draw_point(screen, ps(p), *w as usize, color),
+            Command::Line(p1, p2) =>
+                draw::draw_line(screen, ps(p1), ps(p2), color),
 
             _ => println!("command not implemented: {:?}", cmd)
         }
@@ -86,65 +89,6 @@ fn draw_scene(screen: &mut draw::Screen, scene: &parser::Scene) {
 }
 
 fn draw_stuff(screen: &mut draw::Screen) {
-    draw::draw_point(
-        screen,
-        data::PointScreen { x: 50, y: 50 },
-        10,
-        data::Color::RED
-    );
-
-    draw::draw_line(
-        screen,
-        data::PointScreen { x: 400, y: 300},
-        data::PointScreen { x: 400-50, y: 300-100},
-        data::Color::GREEN
-    );
-    draw::draw_line(
-        screen,
-        data::PointScreen { x: 400, y: 300},
-        data::PointScreen { x: 400-100, y: 300-50},
-        data::Color::GREEN
-    );
-
-    draw::draw_line(
-        screen,
-        data::PointScreen { x: 400, y: 300},
-        data::PointScreen { x: 400-50, y: 300+100},
-        data::Color::GREEN
-    );
-    draw::draw_line(
-        screen,
-        data::PointScreen { x: 400, y: 300},
-        data::PointScreen { x: 400-100, y: 300+50},
-        data::Color::GREEN
-    );
-
-    draw::draw_line(
-        screen,
-        data::PointScreen { x: 400, y: 300},
-        data::PointScreen { x: 400+50, y: 300-100},
-        data::Color::GREEN
-    );
-    draw::draw_line(
-        screen,
-        data::PointScreen { x: 400, y: 300},
-        data::PointScreen { x: 400+100, y: 300-50},
-        data::Color::GREEN
-    );
-
-    draw::draw_line(
-        screen,
-        data::PointScreen { x: 400, y: 300},
-        data::PointScreen { x: 400+50, y: 300+100},
-        data::Color::GREEN
-    );
-    draw::draw_line(
-        screen,
-        data::PointScreen { x: 400, y: 300},
-        data::PointScreen { x: 400+100, y: 300+50},
-        data::Color::GREEN
-    );
-
     draw::draw_triangle(
         screen,
         data::PointScreen {x: 100, y: 200},

@@ -11,12 +11,15 @@ pub struct Scene {
 
 #[derive(Debug)]
 pub enum Command {
+    Point(Point3, f32),
     Line(Point3, Point3),
     Trig(Point3, Point3, Point3),
 
     Translate(f32, f32, f32),
     Scale(f32, f32, f32),
     Rotate(Point3, f32),
+
+    Color(Color),
 }
 
 pub fn load_scene(path: &str) -> Result<Scene, String> {
@@ -34,12 +37,15 @@ pub fn load_scene(path: &str) -> Result<Scene, String> {
 
         let cmd = line.split(" ").next().ok_or("line \"{}\" does not have a command")?;
         let cmd = match cmd {
+            "point"    => parse_cmd_point(&mut lines),
             "line"     => parse_cmd_line(&mut lines),
             "triangle" => parse_cmd_triangle(&mut lines),
 
             "translate" => parse_cmd_translate(&mut lines),
             "scale"     => parse_cmd_scale(&mut lines),
             "rotate"    => parse_cmd_rotate(&mut lines),
+
+            "color"     => parse_cmd_color(&mut lines),
 
             _ => Err(format!("line \"{}\" does not have a command", line)),
         };
@@ -51,6 +57,18 @@ pub fn load_scene(path: &str) -> Result<Scene, String> {
 
 fn ran_out_of_lines(cmd_name: &str) -> String {
     format!("ran out of lines while parsing command \"{}\"", cmd_name)
+}
+
+fn parse_cmd_point(
+    lines: &mut io::Lines<io::BufReader<File>>
+) -> Result<Command, String> {
+    let line = lines.next().ok_or(ran_out_of_lines("point"))?;
+    let line = line.map_err(|e| e.to_string())?;
+    let fs = parse_n_floats(4, line)?;
+    Ok(Command::Point(
+        Point3 { x: fs[0], y: fs[1], z: fs[2] },
+        fs[3]
+    ))
 }
 
 fn parse_cmd_line(
@@ -70,6 +88,26 @@ fn parse_cmd_triangle(lines: &mut io::Lines<io::BufReader<File>>) -> Result<Comm
 fn parse_cmd_translate(lines: &mut io::Lines<io::BufReader<File>>) -> Result<Command, String> { Err("not implemented".to_string()) }
 fn parse_cmd_scale(lines: &mut io::Lines<io::BufReader<File>>) -> Result<Command, String> { Err("not implemented".to_string()) }
 fn parse_cmd_rotate(lines: &mut io::Lines<io::BufReader<File>>) -> Result<Command, String> { Err("not implemented".to_string()) }
+
+fn parse_cmd_color(
+    lines: &mut io::Lines<io::BufReader<File>>
+) -> Result<Command, String> {
+    Err("not implemented".to_string())
+}
+
+fn parse_n_u8s(
+    n: usize,
+    line: String,
+) -> Result<Vec<u8>, String> {
+    let xs: Vec<u8> = line.split(" ")
+        .map(|s| s.parse())
+        .collect::<Result<Vec<u8>, _>>()
+        .map_err(|e| e.to_string())?;
+    if xs.len() == n {
+        return Ok(xs);
+    }
+    Err(format!("expected {} floats, found {}", n, xs.len()))
+}
 
 fn parse_n_floats(
     n: usize,
