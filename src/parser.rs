@@ -15,16 +15,16 @@ pub enum Command {
     Line(Point3, Point3),
     Triangle(Point3, Point3, Point3),
 
-    Translate(f32, f32, f32),
-    Scale(f32, f32, f32),
-    Rotate(Point3, f32),
+    // Translate(f32, f32, f32),
+    // Scale(f32, f32, f32),
+    // Rotate(Point3, f32),
 
-    Color(Color),
+    // Color(Color),
 }
 
 pub fn load_scene(path: &str) -> Result<Scene, String> {
     let mut lines = read_lines(path)
-        .map_err(|x| { format!("file \"{}\" does not exist", path) })?;
+        .map_err(|_| { format!("file \"{}\" does not exist", path) })?;
 
     let mut commands: Vec<Command> = vec![];
 
@@ -96,14 +96,14 @@ fn parse_cmd_triangle(
     ))
 }
 
-fn parse_cmd_translate(lines: &mut io::Lines<io::BufReader<File>>) -> Result<Command, String> { unimplemented!() }
-fn parse_cmd_scale(lines: &mut io::Lines<io::BufReader<File>>) -> Result<Command, String> { unimplemented!() }
-fn parse_cmd_rotate(lines: &mut io::Lines<io::BufReader<File>>) -> Result<Command, String> { unimplemented!() }
+fn parse_cmd_translate(_lines: &mut io::Lines<io::BufReader<File>>) -> Result<Command, String> { unimplemented!() }
+fn parse_cmd_scale(_lines: &mut io::Lines<io::BufReader<File>>) -> Result<Command, String> { unimplemented!() }
+fn parse_cmd_rotate(_lines: &mut io::Lines<io::BufReader<File>>) -> Result<Command, String> { unimplemented!() }
 
 fn parse_cmd_color(
-    lines: &mut io::Lines<io::BufReader<File>>
+    _lines: &mut io::Lines<io::BufReader<File>>
 ) -> Result<Command, String> {
-    Err("not implemented".to_string())
+    unimplemented!()
 }
 
 fn parse_n_floats(

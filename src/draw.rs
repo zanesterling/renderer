@@ -59,9 +59,9 @@ pub fn draw_line(
     }
 
     let mut x1 = p1.x as isize;
-    let mut x2 = p2.x as isize;
     let mut y1 = p1.y as isize;
-    let mut y2 = p2.y as isize;
+    let x2 = p2.x as isize;
+    let y2 = p2.y as isize;
     let mut dx: isize = x2 - x1;
     let mut dy: isize = y2 - y1;
 
@@ -76,11 +76,8 @@ pub fn draw_line(
         }
     } else {
         if (p2.x < p1.x && p2.y >= p1.y) || (p2.x >= p1.x && p2.y < p1.y) {
-            let (tx1, ty1) = (x1, y1);
             x1 = x2;
             y1 = y2;
-            x2 = tx1;
-            y2 = ty1;
             dx *= -1;
             dy *= -1;
         }
