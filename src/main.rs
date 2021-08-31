@@ -14,7 +14,7 @@ use crate::transform::Transform;
 const SCR_W: u32 = 800;
 const SCR_H: u32 = 600;
 
-const SCENE_PATH: &str = "./scenes/geom_test.scn";
+const SCENE_PATH: &str = "./scenes/transform_test.scn";
 
 fn main() {
     let sdl_context = sdl2::init().unwrap();
@@ -74,7 +74,7 @@ fn copy_screen_data(screen: &draw::Screen, out: &mut Vec<u8>) {
 
 fn draw_scene(screen: &mut draw::Screen, scene: &parser::Scene) {
     fn ps(p: data::Point3) -> data::PointScreen {
-        data::PointScreen { x: p.x as usize, y: p.y as usize}
+        data::PointScreen { x: p.x as isize, y: p.y as isize }
     }
     use crate::parser::Command;
 
@@ -95,6 +95,8 @@ fn draw_scene(screen: &mut draw::Screen, scene: &parser::Scene) {
 
             Command::Scale(x, y, z) =>
                 t = Transform::scale(*x, *y, *z) * t,
+            Command::Translate(x, y, z) =>
+                t = Transform::translate(*x, *y, *z) * t,
 
             Command::Color(c) => color = *c,
 

@@ -17,12 +17,12 @@ impl Screen {
 }
 
 fn set_px_unsafe(screen: &mut Screen, color: Color, point: PointScreen) {
-    screen.data[point.x + point.y * screen.w] = color;
+    screen.data[(point.x + point.y * screen.w as isize) as usize] = color;
 }
 
 fn set_px_safe(screen: &mut Screen, color: Color, point: PointScreen) {
-    if point.x >= screen.w { return; }
-    if point.y >= screen.h { return; }
+    if point.x >= screen.w as isize { return; }
+    if point.y >= screen.h as isize { return; }
     set_px_unsafe(screen, color, point);
 }
 
@@ -34,14 +34,18 @@ where T: PartialOrd<T> {
 }
 
 pub fn draw_point(screen: &mut Screen, point: PointScreen, w: usize, color: Color) {
-    let left  = clamp(point.x - w, 0, screen.w-1);
-    let right = clamp(point.x + w, 0, screen.w-1);
-    let top = clamp(point.y - w, 0, screen.h-1);
-    let bot = clamp(point.y + w, 0, screen.h-1);
+    let px = point.x as isize;
+    let py = point.y as isize;
+    let w = w as isize;
+
+    let left  = clamp(px-w, 0, screen.w as isize-1);
+    let right = clamp(px+w, 0, screen.w as isize-1);
+    let top   = clamp(py-w, 0, screen.h as isize-1);
+    let bot   = clamp(py+w, 0, screen.h as isize-1);
 
     for x in left..right {
         for y in top..bot {
-            set_px_unsafe(screen, color, PointScreen { x: x, y: y });
+            set_px_safe(screen, color, PointScreen { x: x, y: y, });
         }
     }
 }
@@ -65,13 +69,16 @@ pub fn draw_line(
     let mut dx: isize = x2 - x1;
     let mut dy: isize = y2 - y1;
 
+    if      dx == 0 { fill_col(screen, p1.x, p1.y, p2.y, color); return }
+    else if dy == 0 { fill_row(screen, p1.y, p1.x, p2.x, color); return }
+
     if dx.abs() >= dy.abs() {
         for x in 0..dx+1 {
             let y = y1 + x * dy / dx;
             set_px_safe(screen, color,
                 PointScreen {
-                    x: (x1 + x) as usize,
-                    y: y as usize
+                    x: (x1 + x),
+                    y: y
                 });
         }
     } else {
@@ -85,8 +92,8 @@ pub fn draw_line(
             let x = x1 + y * dx / dy;
             set_px_safe(screen, color,
                 PointScreen {
-                    x: x as usize,
-                    y: (y1 + y) as usize
+                    x: x,
+                    y: (y1 + y)
                 });
         }
     }
@@ -119,7 +126,7 @@ pub fn draw_triangle(
         let dy = bot.y as isize - top.y as isize;
         let i  = mid.y as isize - top.y as isize;
         PointScreen {
-            x: (top.x as isize + dx * i / dy) as usize,
+            x: (top.x as isize + dx * i / dy),
             y: mid.y
         }
     };
@@ -159,7 +166,7 @@ fn fill_flat_top_tri(
     for i in 0..dy1+1 {
         let lt_x = mid.x  as isize + i * dx1 / dy1;
         let rt_x = mid2.x as isize + i * dx2 / dy2;
-        fill_row(screen, mid.y + i as usize, lt_x as usize, rt_x as usize, color);
+        fill_row(screen, mid.y + i, lt_x, rt_x, color);
     }
 }
 
@@ -184,20 +191,38 @@ fn fill_flat_bot_tri(
     for i in 0..dy1+1 {
         let lt_x = top.x as isize + i * dx1 / dy1;
         let rt_x = top.x as isize + i * dx2 / dy2;
-        fill_row(screen, top.y + i as usize, lt_x as usize, rt_x as usize, color);
+        fill_row(screen, top.y + i, lt_x, rt_x, color);
+    }
+}
+
+fn fill_col(
+    screen: &mut Screen,
+    x: isize,
+    mut y1: isize,
+    mut y2: isize,
+    color: Color
+) {
+    if x < 0  || x  >= (screen.h as isize) { return; }
+    if y2 < 0 || y1 >= (screen.w as isize) { return; }
+    if y1 < 0                    { y1 = 0; }
+    if y2 >= (screen.h as isize) { y2 = screen.h as isize - 1; }
+
+    for y in y1..y2+1 {
+        set_px_unsafe(screen, color, PointScreen { x: x, y: y });
     }
 }
 
 fn fill_row(
     screen: &mut Screen,
-    y: usize,
-    x1: usize,
-    mut x2: usize,
+    y: isize,
+    mut x1: isize,
+    mut x2: isize,
     color: Color
 ) {
-    if y  >= screen.h { return; }
-    if x1 >= screen.w { return; }
-    if x2 >= screen.w { x2 = screen.w; }
+    if y < 0  || y  >= (screen.h as isize) { return; }
+    if x2 < 0 || x1 >= (screen.w as isize) { return; }
+    if x1 < 0                    { x1 = 0; }
+    if x2 >= (screen.w as isize) { x2 = screen.w as isize - 1; }
 
     for x in x1..x2+1 {
         set_px_unsafe(screen, color, PointScreen { x: x, y: y });

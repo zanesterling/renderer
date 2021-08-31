@@ -29,8 +29,8 @@ pub struct Point2 {
 // Y from top to bottom.
 #[derive(Debug, Copy, Clone)]
 pub struct PointScreen {
-    pub x: usize,
-    pub y: usize,
+    pub x: isize,
+    pub y: isize,
 }
 
 #[derive(Debug, Copy, Clone)]

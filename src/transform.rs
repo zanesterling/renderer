@@ -26,6 +26,17 @@ impl Transform {
             ]
         }
     }
+
+    pub fn translate(x: f32, y: f32, z:f32) -> Transform {
+        Transform {
+            data: [
+                0.0, 0.0, 0.0, x,
+                0.0, 0.0, 0.0, y,
+                0.0, 0.0, 0.0, z,
+                0.0, 0.0, 0.0, 1.0,
+            ]
+        }
+    }
 }
 
 impl std::ops::Mul<Transform> for Transform {
@@ -66,9 +77,9 @@ impl std::ops::Mul<Point3> for Transform {
     fn mul(self, p: Point3) -> Self::Output {
         let m = &self.data;
         Point3 {
-            x: m[0]*p.x  + m[1]*p.y  + m[2]*p.z,  //+ m[3]*p.w,
-            y: m[4]*p.x  + m[5]*p.y  + m[6]*p.z,  //+ m[7]*p.w,
-            z: m[8]*p.x  + m[9]*p.y  + m[10]*p.z, //+ m[11]*p.w,
+            x: m[0]*p.x  + m[1]*p.y  + m[2]*p.z  + m[3]*1.0,
+            y: m[4]*p.x  + m[5]*p.y  + m[6]*p.z  + m[7]*1.0,
+            z: m[8]*p.x  + m[9]*p.y  + m[10]*p.z + m[11]*1.0,
             //w: m[12]*p.x + m[13]*p.y + m[14]*p.z, + m[15]*p.w,
         }
     }
