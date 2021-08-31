@@ -7,6 +7,9 @@ use std::time::Duration;
 mod data;
 mod draw;
 mod parser;
+mod transform;
+
+use crate::transform::Transform;
 
 const SCR_W: u32 = 800;
 const SCR_H: u32 = 600;
@@ -70,21 +73,28 @@ fn copy_screen_data(screen: &draw::Screen, out: &mut Vec<u8>) {
 }
 
 fn draw_scene(screen: &mut draw::Screen, scene: &parser::Scene) {
-    fn ps(p: &data::Point3) -> data::PointScreen {
+    fn ps(p: data::Point3) -> data::PointScreen {
         data::PointScreen { x: p.x as usize, y: p.y as usize}
     }
     use crate::parser::Command;
 
     let mut color = data::Color::WHITE;
+    let mut t = Transform::IDENTITY;
 
     for cmd in &scene.commands {
         match cmd {
             Command::Point(p, w) =>
-                draw::draw_point(screen, ps(p), *w as usize, color),
+                draw::draw_point(screen, ps(t*(*p)), *w as usize, color),
             Command::Line(p1, p2) =>
-                draw::draw_line(screen, ps(p1), ps(p2), color),
+                draw::draw_line(screen, ps(t*(*p1)), ps(t*(*p2)), color),
             Command::Triangle(p1, p2, p3) =>
-                draw::draw_triangle(screen, ps(p1), ps(p2), ps(p3), color),
+                draw::draw_triangle(
+                    screen,
+                    ps(t*(*p1)), ps(t*(*p2)), ps(t*(*p3)),
+                    color),
+
+            Command::Scale(x, y, z) =>
+                t = Transform::scale(*x, *y, *z) * t,
 
             Command::Color(c) => color = *c,
 

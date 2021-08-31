@@ -22,7 +22,7 @@ fn set_px_unsafe(screen: &mut Screen, color: Color, point: PointScreen) {
 
 fn set_px_safe(screen: &mut Screen, color: Color, point: PointScreen) {
     if point.x >= screen.w { return; }
-    if point.y >= screen.w { return; }
+    if point.y >= screen.h { return; }
     set_px_unsafe(screen, color, point);
 }
 

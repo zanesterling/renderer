@@ -16,7 +16,7 @@ pub enum Command {
     Triangle(Point3, Point3, Point3),
 
     // Translate(f32, f32, f32),
-    // Scale(f32, f32, f32),
+    Scale(f32, f32, f32),
     // Rotate(Point3, f32),
 
     Color(Color),
@@ -103,7 +103,16 @@ fn parse_cmd_triangle(
 }
 
 fn parse_cmd_translate(_lines: &mut io::Lines<io::BufReader<File>>) -> Result<Command, String> { unimplemented!() }
-fn parse_cmd_scale(_lines: &mut io::Lines<io::BufReader<File>>) -> Result<Command, String> { unimplemented!() }
+
+fn parse_cmd_scale(
+    lines: &mut io::Lines<io::BufReader<File>>
+) -> Result<Command, String> {
+    let l = lines.next().ok_or(ran_out_of_lines("line"))?;
+    let l = l.map_err(|e| e.to_string())?;
+    let xs = parse_n_floats(3, l)?;
+    Ok(Command::Scale(xs[0], xs[1], xs[2]))
+}
+
 fn parse_cmd_rotate(_lines: &mut io::Lines<io::BufReader<File>>) -> Result<Command, String> { unimplemented!() }
 
 fn parse_cmd_color(
