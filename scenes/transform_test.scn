@@ -1,16 +1,18 @@
-# translate
-# 50 50 0
-
-# scale
-# 0.0025 1 1
-
+scale
+100 -100 1
+translate
+400 300 0
 
 color
 0 0 255
 line
-0 0 0 50 0 0
+0 0 0 -1 0 0
 line
-0 0 0 0 50 0
+0 0 0 0 -1 0
+line
+0 0 0 1 0 0
+line
+0 0 0 0 1 0
 
 color
 255 0 0
@@ -20,10 +22,6 @@ point
 color
 0 255 0
 point
-50 0 0 5
+1 0 0 5
 point
-0 50 0 5
-point
--50 0 0 5
-point
-0 -50 0 5
+0 1 0 5

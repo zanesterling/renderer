@@ -69,10 +69,8 @@ pub fn draw_line(
     let mut dx: isize = x2 - x1;
     let mut dy: isize = y2 - y1;
 
-    if      dx == 0 { fill_col(screen, p1.x, p1.y, p2.y, color); return }
-    else if dy == 0 { fill_row(screen, p1.y, p1.x, p2.x, color); return }
-
     if dx.abs() >= dy.abs() {
+        if dx == 0 { fill_col(screen, p1.x, p1.y, p2.y, color); return }
         for x in 0..dx+1 {
             let y = y1 + x * dy / dx;
             set_px_safe(screen, color,
@@ -88,6 +86,7 @@ pub fn draw_line(
             dx *= -1;
             dy *= -1;
         }
+        if dy == 0 { fill_row(screen, p1.y, p1.x, p2.x, color); return }
         for y in 0..dy+1 {
             let x = x1 + y * dx / dy;
             set_px_safe(screen, color,
