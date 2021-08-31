@@ -14,6 +14,12 @@ impl Screen {
             data: vec![Color {r: 0, g: 0, b: 0}; w * h]
         }
     }
+
+    pub fn clear(&mut self) {
+        for i in 0..self.w * self.h {
+            self.data[i] = Color::BLACK;
+        }
+    }
 }
 
 fn set_px_unsafe(screen: &mut Screen, color: Color, point: PointScreen) {
@@ -33,18 +39,18 @@ where T: PartialOrd<T> {
     return x;
 }
 
-pub fn draw_point(screen: &mut Screen, point: PointScreen, w: usize, color: Color) {
+pub fn draw_point(screen: &mut Screen, point: PointScreen, r: usize, color: Color) {
     let px = point.x as isize;
     let py = point.y as isize;
-    let w = w as isize;
+    let w = r as isize;
 
     let left  = clamp(px-w, 0, screen.w as isize-1);
     let right = clamp(px+w, 0, screen.w as isize-1);
     let top   = clamp(py-w, 0, screen.h as isize-1);
     let bot   = clamp(py+w, 0, screen.h as isize-1);
 
-    for x in left..right {
-        for y in top..bot {
+    for x in left..right+1 {
+        for y in top..bot+1 {
             set_px_safe(screen, color, PointScreen { x: x, y: y, });
         }
     }

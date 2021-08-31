@@ -2,7 +2,7 @@ extern crate sdl2;
 
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 mod data;
 mod draw;
@@ -13,8 +13,10 @@ use crate::transform::Transform;
 
 const SCR_W: u32 = 800;
 const SCR_H: u32 = 600;
+const NANOS_PER_FRAME: u32 = 1_000_000_000u32 / 60;
+const TICK_DURATION: Duration = Duration::from_nanos(NANOS_PER_FRAME as u64);
 
-const SCENE_PATH: &str = "./scenes/transform_test.scn";
+const SCENE_PATH: &str = "./scenes/animate_test.scn";
 
 fn main() {
     let sdl_context = sdl2::init().unwrap();
@@ -34,11 +36,14 @@ fn main() {
     let mut draw_data: Vec<u8> = vec![0; (SCR_W * SCR_H * 4) as usize];
     let mut screen = draw::Screen::new(SCR_W as usize, SCR_H as usize);
 
-    let scene = parser::load_scene(SCENE_PATH).unwrap();
+    let mut scene = parser::load_scene(SCENE_PATH).unwrap();
 
+    let mut loop_start = Instant::now();
     let mut event_pump = sdl_context.event_pump().unwrap();
+    let mut t: u64 = 0;
+    let mut frames_this_second = 0;
     'running: loop {
-        canvas.clear();
+        let tick_start = Instant::now();
 
         for event in event_pump.poll_iter() {
             match event {
@@ -46,21 +51,37 @@ fn main() {
                 Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                     break 'running
                 },
+                Event::MouseButtonDown {..} => {
+                    scene = parser::load_scene(SCENE_PATH).unwrap();
+                    loop_start = Instant::now();
+                    t = 0;
+                },
                 _ => {}
             }
         }
 
         {
-            draw_scene(&mut screen, &scene);
+            draw_scene(&mut screen, &scene, t as f32 / 1_000_000_000f32).unwrap();
 
             // Blit!
             copy_screen_data(&screen, &mut draw_data);
             texture.update(None, &draw_data, SCR_W as usize * 4).unwrap();
             canvas.copy(&texture, None, None).unwrap();
+            canvas.present();
         }
 
-        canvas.present();
-        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
+        // FIXME This will overflow at some point and cause a crash.
+        let tick_length = tick_start.elapsed();
+        let t2 = loop_start.elapsed().as_nanos() as u64;
+        frames_this_second += 1;
+        if t2 / 1_000_000_000u64 > t / 1_000_000_000u64 {
+            println!("second {}, fps {}", t / 1_000_000_000u64, frames_this_second);
+            frames_this_second = 0;
+        }
+        t = t2;
+        if tick_length < TICK_DURATION {
+            ::std::thread::sleep(TICK_DURATION - tick_length);
+        }
     }
 }
 
@@ -72,36 +93,51 @@ fn copy_screen_data(screen: &draw::Screen, out: &mut Vec<u8>) {
     }
 }
 
-fn draw_scene(screen: &mut draw::Screen, scene: &parser::Scene) {
+fn draw_scene(
+    screen: &mut draw::Screen,
+    scene: &parser::Scene,
+    t: f32
+) -> Result<(), String> {
     fn ps(p: data::Point3) -> data::PointScreen {
         data::PointScreen { x: p.x as isize, y: p.y as isize }
     }
     use crate::parser::Command;
 
+    screen.clear();
+
     let mut color = data::Color::WHITE;
-    let mut t = Transform::IDENTITY;
+    let mut tr = Transform::IDENTITY;
 
     for cmd in &scene.commands {
         match cmd {
-            Command::Point(p, w) =>
-                draw::draw_point(screen, ps(t*(*p)), *w as usize, color),
+            Command::Point { x, y, z, rad } => {
+                let rad = scene.eval_at(t, rad)?;
+                let p = data::Point3{
+                    x: scene.eval_at(t, x)?,
+                    y: scene.eval_at(t, y)?,
+                    z: scene.eval_at(t, z)?
+                };
+                draw::draw_point(screen, ps(tr*p), rad as usize, color)
+            },
             Command::Line(p1, p2) =>
-                draw::draw_line(screen, ps(t*(*p1)), ps(t*(*p2)), color),
+                draw::draw_line(screen, ps(tr*(*p1)), ps(tr*(*p2)), color),
             Command::Triangle(p1, p2, p3) =>
                 draw::draw_triangle(
                     screen,
-                    ps(t*(*p1)), ps(t*(*p2)), ps(t*(*p3)),
+                    ps(tr*(*p1)), ps(tr*(*p2)), ps(tr*(*p3)),
                     color),
 
             Command::Scale(x, y, z) =>
-                t = Transform::scale(*x, *y, *z) * t,
+                tr = Transform::scale(*x, *y, *z) * tr,
             Command::Translate(x, y, z) =>
-                t = Transform::translate(*x, *y, *z) * t,
-            Command::Identity => t = Transform::IDENTITY,
+                tr = Transform::translate(*x, *y, *z) * tr,
+            Command::Identity => tr = Transform::IDENTITY,
 
             Command::Color(c) => color = *c,
 
-            _ => println!("command not implemented: {:?}", cmd)
+            _ => return Err(format!("command not implemented: {:?}", cmd))
         }
     }
+
+    Ok(())
 }

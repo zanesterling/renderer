@@ -3,15 +3,77 @@ use crate::data::*;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct Scene {
     pub commands: Vec<Command>,
+    vars: HashMap<String, Vec<Animation>>
+}
+
+#[derive(Debug)]
+struct Animation {
+    from: f32,
+    to: f32,
+    t1: f32,
+    t2: f32,
+}
+
+impl Animation {
+    fn overlaps(&self, other: &Animation) -> bool {
+        (self.t1 <= other.t1 && other.t1 <= self.t2) ||
+        (self.t1 <= other.t2 && other.t2 <= self.t2) ||
+        (other.t1 <= self.t1 && self.t1 <= other.t2) ||
+        (other.t1 <= self.t2 && self.t2 <= other.t2)
+    }
+}
+
+impl Scene {
+    pub fn eval_at(&self, time: f32, val: &Val) -> Result<f32, String> {
+        let var = match val {
+            Val::Raw(x) => return Ok(*x),
+            Val::Var(s) => s,
+        };
+
+        let mut last_time = -1.0;
+        let mut last_val = None;
+        let anims = self.vars.get(var)
+            .ok_or(format!("var \"{}\" not defined", var))?;
+        for anim in anims {
+            match *anim {
+                Animation { from, to, t1, t2 } =>
+                    if t1 <= time && time <= t2 {
+                        let p = (time - t1) / (t2 - t1);
+                        return Ok(lerp(from, to, p));
+                    } else if time > t2 && t2 > last_time {
+                        last_time = t2;
+                        last_val = Some(to);
+                    }
+            }
+        }
+
+        match last_val {
+            Some(x) => Ok(x),
+            None => Err(
+                format!("var \"{}\" has no matching animations at time {:?}", var, time)),
+        }
+    }
+}
+
+fn lerp(y1: f32, y2: f32, t: f32) -> f32 {
+    (y1 * (1.0-t) + y2 * t) / 2.0
+}
+
+
+#[derive(Debug, Clone)]
+pub enum Val {
+    Raw(f32),
+    Var(String),
 }
 
 #[derive(Debug)]
 pub enum Command {
-    Point(Point3, f32),
+    Point { x: Val, y: Val, z: Val, rad: Val },
     Line(Point3, Point3),
     Triangle(Point3, Point3, Point3),
 
@@ -28,6 +90,7 @@ pub fn load_scene(path: &str) -> Result<Scene, String> {
         .map_err(|_| { format!("file \"{}\" does not exist", path) })?;
 
     let mut commands: Vec<Command> = vec![];
+    let mut vars: HashMap<String, Vec<Animation>> = HashMap::new();
 
     'foo: loop {
         let line = match lines.next() {
@@ -41,26 +104,47 @@ pub fn load_scene(path: &str) -> Result<Scene, String> {
             .split(" ")
             .next()
             .ok_or("line \"{}\" does not have a command")?;
-        let cmd = match cmd {
+        match cmd {
             "#" => continue 'foo,
 
-            "point"    => parse_cmd_point(&mut lines),
-            "line"     => parse_cmd_line(&mut lines),
-            "triangle" => parse_cmd_triangle(&mut lines),
+            "point"    => commands.push(parse_cmd_point(&mut lines)?),
+            "line"     => commands.push(parse_cmd_line(&mut lines)?),
+            "triangle" => commands.push(parse_cmd_triangle(&mut lines)?),
 
-            "identity"  => Ok(Command::Identity),
-            "translate" => parse_cmd_translate(&mut lines),
-            "scale"     => parse_cmd_scale(&mut lines),
-            "rotate"    => parse_cmd_rotate(&mut lines),
+            "identity"  => commands.push(Command::Identity),
+            "translate" => commands.push(parse_cmd_translate(&mut lines)?),
+            "scale"     => commands.push(parse_cmd_scale(&mut lines)?),
+            "rotate"    => commands.push(parse_cmd_rotate(&mut lines)?),
 
-            "color"     => parse_cmd_color(&mut lines),
+            "color"     => commands.push(parse_cmd_color(&mut lines)?),
+            "animate"   => {
+                let (var, animation) = parse_cmd_animate(&mut lines)?;
+                if !vars.contains_key(&var) {
+                    vars.insert(var.clone(), vec![]);
+                }
+                let anims = vars.get_mut(&var).unwrap();
+                for i in 0..anims.len() {
+                    let other = &anims[i];
+                    if animation.t2 < other.t1 {
+                        anims.insert(i, animation);
+                        continue 'foo;
+                    }
+                    if animation.overlaps(&other) {
+                        return Err(
+                            format!("animation for var \"{}\" overlaps with another", var));
+                    }
+                }
+                anims.push(animation);
+            }
 
-            _ => Err(format!("line \"{}\" does not have a command", line)),
+            _ => return Err(format!("line \"{}\" does not have a command", line)),
         };
-        commands.push(cmd?);
     }
 
-    Ok(Scene { commands: commands })
+    Ok(Scene {
+        commands: commands,
+        vars: vars,
+    })
 }
 
 fn ran_out_of_lines(cmd_name: &str) -> String {
@@ -72,11 +156,13 @@ fn parse_cmd_point(
 ) -> Result<Command, String> {
     let line = lines.next().ok_or(ran_out_of_lines("point"))?;
     let line = line.map_err(|e| e.to_string())?;
-    let fs = parse_n_floats(4, line)?;
-    Ok(Command::Point(
-        Point3 { x: fs[0], y: fs[1], z: fs[2] },
-        fs[3]
-    ))
+    let fs = parse_n_vals(4, line)?;
+    Ok(Command::Point{
+        x: fs[0].clone(),
+        y: fs[1].clone(),
+        z: fs[2].clone(),
+        rad: fs[3].clone(),
+    })
 }
 
 fn parse_cmd_line(
@@ -127,10 +213,27 @@ fn parse_cmd_rotate(_lines: &mut io::Lines<io::BufReader<File>>) -> Result<Comma
 fn parse_cmd_color(
     lines: &mut io::Lines<io::BufReader<File>>
 ) -> Result<Command, String> {
-    let l = lines.next().ok_or(ran_out_of_lines("line"))?;
-    let l = l.map_err(|e| e.to_string())?;
-    let xs = parse_n_u8s(3, l)?;
+    let xs = parse_n_u8s(3, next_line(lines)?)?;
     Ok(Command::Color(Color { r: xs[0], g: xs[1], b: xs[2] }))
+}
+
+fn parse_cmd_animate(
+    lines: &mut io::Lines<io::BufReader<File>>
+) -> Result<(String, Animation), String> {
+    let l = next_line(lines)?;
+    let (var, rest) = l.split_once(" ")
+        .ok_or("line does not have a first thing")?;
+    let xs = parse_n_floats(4, rest.to_string())?;
+    Ok((
+        var.to_string(),
+        Animation { from: xs[0], to: xs[1], t1: xs[2], t2: xs[3]}))
+}
+
+fn next_line(
+    lines: &mut io::Lines<io::BufReader<File>>
+) -> Result<String, String> {
+    let l = lines.next().ok_or(ran_out_of_lines("line"))?;
+    l.map_err(|e| e.to_string())
 }
 
 fn parse_n_u8s(
@@ -159,6 +262,20 @@ fn parse_n_floats(
         return Ok(xs);
     }
     Err(format!("expected {} floats, found {}", n, xs.len()))
+}
+
+fn parse_n_vals(
+    n: usize,
+    line: String,
+) -> Result<Vec<Val>, String> {
+    let xs: Vec<Val> = line.split(" ")
+        .map(|s| s.parse()
+            .map_or(Val::Var(s.to_string()), |f| Val::Raw(f)))
+        .collect::<Vec<Val>>();
+    if xs.len() == n {
+        return Ok(xs);
+    }
+    Err(format!("expected {} values, found {}", n, xs.len()))
 }
 
 // The output is wrapped in a Result to allow matching on errors
