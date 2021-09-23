@@ -61,7 +61,7 @@ impl Scene {
 }
 
 fn lerp(y1: f32, y2: f32, t: f32) -> f32 {
-    (y1 * (1.0-t) + y2 * t) / 2.0
+    y1 * (1.0-t) + y2 * t
 }
 
 
