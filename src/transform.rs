@@ -39,17 +39,35 @@ impl Transform {
     }
 
     pub fn rotate(th: f32, v: Point3) -> Transform {
-        // TODO: Generalize to rotations around an aribtrary vector,
-        // at some point when it is not time to go to bed lmao.
-        let v = v * (1.0 / v.magnitude());
-        Transform {
-            data: [
-                th.cos(), -th.sin(), v.x, 0.0,
-                th.sin(),  th.cos(), v.y, 0.0,
-                     0.0,       0.0, v.z, 0.0,
+        let rot_around_z = Transform {data: [
+            th.cos(), -th.sin(), 0.0, 0.0,
+            th.sin(),  th.cos(), 0.0, 0.0,
+                 0.0,       0.0, 1.0, 0.0,
+                 0.0,       0.0, 0.0, 1.0,
+        ]};
+        if v.x == 0.0 && v.y == 0.0 { return rot_around_z; }
+
+        // Transform from x,y,z basis to a basis where `v` lies along the z
+        // axis. Source: http://scipp.ucsc.edu/~haber/ph216/rotation_12.pdf
+        let vmag = (v.x*v.x + v.y*v.y).sqrt();
+        let basis_change = Transform { data: [
+            v.z*v.x*vmag, -v.y*vmag, v.x, 0.0,
+            v.z*v.y*vmag,  v.x*vmag, v.y, 0.0,
+                   -vmag,       0.0, v.z, 0.0,
                      0.0,       0.0, 0.0, 1.0,
-            ]
-        }
+        ]};
+
+        basis_change * rot_around_z * basis_change.transpose()
+    }
+
+    pub fn transpose(&self) -> Transform {
+        let d = self.data;
+        Transform { data: [
+            d[0], d[4], d[8],  d[12],
+            d[1], d[5], d[9],  d[13],
+            d[2], d[6], d[10], d[14],
+            d[3], d[7], d[11], d[15],
+        ]}
     }
 }
 

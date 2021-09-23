@@ -22,9 +22,13 @@ point
 
 
 animate
-theta 0 3.14159 0 2.25
+theta 0 3.141 0 2.25
 animate
-theta 3.14159 0 2.75 5
+theta 3.141 0 2.75 5
+animate
+phi 0 12.564 0 2.25
+animate
+phi 12.564 0 2.75 5
 animate
 scale_factor 1 2 0 2.25
 animate
@@ -32,7 +36,9 @@ scale_factor 2 1 2.75 5
 
 identity
 rotate
-theta 0 0 1
+phi 0 0 1
+rotate
+theta 0 1 0
 scale
 scale_factor scale_factor scale_factor
 translate

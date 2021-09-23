@@ -140,6 +140,7 @@ pub fn draw_triangle(
         let dx = bot.x as isize - top.x as isize;
         let dy = bot.y as isize - top.y as isize;
         let i  = mid.y as isize - top.y as isize;
+        if dy == 0 { return; }
         PointScreen {
             x: (top.x as isize + dx * i / dy),
             y: mid.y

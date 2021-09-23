@@ -6,10 +6,10 @@ use std::time::{Instant};
 
 #[allow(dead_code)]
 mod data;
-
 mod draw;
 mod parser;
 mod transform;
+mod util;
 
 use crate::transform::Transform;
 
