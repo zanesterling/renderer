@@ -3,7 +3,7 @@ use crate::data::*;
 pub struct Screen {
     pub w: usize,
     pub h: usize,
-    pub data: Vec<Color>,
+    pub data: Vec<u8>,
 }
 
 impl Screen {
@@ -11,21 +11,31 @@ impl Screen {
         Screen {
             w: w,
             h: h,
-            data: vec![Color {r: 0, g: 0, b: 0}; w * h]
+            data: vec![0; w * h * 4]
         }
     }
 
     pub fn clear(&mut self) {
         for i in 0..self.w * self.h {
-            self.data[i] = Color::BLACK;
+            set_px_unsafe_index(self, Color::BLACK, i);
         }
     }
 }
 
+#[inline]
 fn set_px_unsafe(screen: &mut Screen, color: Color, point: PointScreen) {
-    screen.data[(point.x + point.y * screen.w as isize) as usize] = color;
+    let i = (point.x + point.y * screen.w as isize) as usize;
+    set_px_unsafe_index(screen, color, i);
 }
 
+#[inline]
+fn set_px_unsafe_index(screen: &mut Screen, color: Color, i: usize) {
+    screen.data[i * 4    ] = color.b;
+    screen.data[i * 4 + 1] = color.g;
+    screen.data[i * 4 + 2] = color.r;
+}
+
+#[inline]
 fn set_px_safe(screen: &mut Screen, color: Color, point: PointScreen) {
     if point.x >= screen.w as isize { return; }
     if point.y >= screen.h as isize { return; }

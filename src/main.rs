@@ -2,7 +2,7 @@ extern crate sdl2;
 
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use std::time::{Duration, Instant};
+use std::time::{Instant};
 
 mod data;
 mod draw;
@@ -13,8 +13,6 @@ use crate::transform::Transform;
 
 const SCR_W: u32 = 800;
 const SCR_H: u32 = 600;
-const NANOS_PER_FRAME: u32 = 1_000_000_000u32 / 60;
-const TICK_DURATION: Duration = Duration::from_nanos(NANOS_PER_FRAME as u64);
 
 const SCENE_PATH: &str = "./scenes/animate_test.scn";
 
@@ -33,7 +31,6 @@ fn main() {
 
     let mut texture = texture_creator.create_texture_static(None, SCR_W, SCR_H)
         .unwrap();
-    let mut draw_data: Vec<u8> = vec![0; (SCR_W * SCR_H * 4) as usize];
     let mut screen = draw::Screen::new(SCR_W as usize, SCR_H as usize);
 
     let mut scene = parser::load_scene(SCENE_PATH).unwrap();
@@ -43,8 +40,6 @@ fn main() {
     let mut t: u64 = 0;
     let mut frames_this_second = 0;
     'running: loop {
-        let tick_start = Instant::now();
-
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit {..} |
@@ -60,18 +55,7 @@ fn main() {
             }
         }
 
-        {
-            draw_scene(&mut screen, &scene, t as f32 / 1_000_000_000f32).unwrap();
-
-            // Blit!
-            copy_screen_data(&screen, &mut draw_data);
-            texture.update(None, &draw_data, SCR_W as usize * 4).unwrap();
-            canvas.copy(&texture, None, None).unwrap();
-            canvas.present();
-        }
-
         // FIXME This will overflow at some point and cause a crash.
-        let tick_length = tick_start.elapsed();
         let t2 = loop_start.elapsed().as_nanos() as u64;
         frames_this_second += 1;
         if t2 / 1_000_000_000u64 > t / 1_000_000_000u64 {
@@ -79,17 +63,17 @@ fn main() {
             frames_this_second = 0;
         }
         t = t2;
-        if tick_length < TICK_DURATION {
-            ::std::thread::sleep(TICK_DURATION - tick_length);
-        }
-    }
-}
+        // No need to manually manage framerate -- SDL2 canvas locks present()
+        // to 60fps.
 
-fn copy_screen_data(screen: &draw::Screen, out: &mut Vec<u8>) {
-    for i in 0..screen.w * screen.h {
-        out[i*4    ] = screen.data[i].b;
-        out[i*4 + 1] = screen.data[i].g;
-        out[i*4 + 2] = screen.data[i].r;
+        {
+            draw_scene(&mut screen, &scene, t as f32 / 1_000_000_000f32).unwrap();
+
+            // Blit!
+            texture.update(None, &screen.data, SCR_W as usize * 4).unwrap();
+            canvas.copy(&texture, None, None).unwrap();
+            canvas.present();
+        }
     }
 }
 
