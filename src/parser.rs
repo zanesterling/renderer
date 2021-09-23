@@ -131,31 +131,28 @@ pub fn load_scene(path: &str) -> Result<Scene, String> {
     'foo: loop {
         let line = match lines.next() {
             None => break 'foo,
-            Some(Err(e)) => format!("bad line parse: {}", e),
+            Some(Err(e)) => return Err(format!("bad line parse: {}", e)),
             Some(Ok(l)) => l
         };
 
         if line == "" { continue }
-        let cmd = line.trim()
-            .split(" ")
-            .next()
-            .ok_or("line \"{}\" does not have a command")?;
-        match cmd {
+        let (cmd, rest) = line.trim().split_once(" ").unwrap_or((&line, ""));
+        match &*cmd.to_lowercase() {
             "#" => continue 'foo,
 
-            "point"    => commands.push(parse_cmd_point(&mut lines)?),
-            "line"     => commands.push(parse_cmd_line(&mut lines)?),
-            "triangle" => commands.push(parse_cmd_triangle(&mut lines)?),
-            "mesh"     => commands.push(parse_cmd_mesh(&mut lines)?),
+            "point"    => commands.push(parse_cmd_point(rest)?),
+            "line"     => commands.push(parse_cmd_line(rest)?),
+            "triangle" => commands.push(parse_cmd_triangle(rest)?),
+            "mesh"     => commands.push(parse_cmd_mesh(rest)?),
 
             "identity"  => commands.push(Command::Identity),
-            "translate" => commands.push(parse_cmd_translate(&mut lines)?),
-            "scale"     => commands.push(parse_cmd_scale(&mut lines)?),
-            "rotate"    => commands.push(parse_cmd_rotate(&mut lines)?),
+            "translate" => commands.push(parse_cmd_translate(rest)?),
+            "scale"     => commands.push(parse_cmd_scale(rest)?),
+            "rotate"    => commands.push(parse_cmd_rotate(rest)?),
 
-            "color"     => commands.push(parse_cmd_color(&mut lines)?),
+            "color"     => commands.push(parse_cmd_color(rest)?),
             "animate"   => {
-                let (var, animation) = parse_cmd_animate(&mut lines)?;
+                let (var, animation) = parse_cmd_animate(rest)?;
                 if !vars.contains_key(&var) {
                     vars.insert(var.clone(), vec![]);
                 }
@@ -188,36 +185,24 @@ fn ran_out_of_lines(cmd_name: &str) -> String {
     format!("ran out of lines while parsing command \"{}\"", cmd_name)
 }
 
-fn parse_cmd_point(
-    lines: &mut io::Lines<io::BufReader<File>>
-) -> Result<Command, String> {
-    let line = lines.next().ok_or(ran_out_of_lines("point"))?;
-    let line = line.map_err(|e| e.to_string())?;
-    let fs = parse_n_vals(4, line)?;
+fn parse_cmd_point(rest: &str) -> Result<Command, String> {
+    let fs = parse_n_vals(4, rest)?;
     Ok(Command::Point{
         p: ValPoint3{ x: fs[0].clone(), y: fs[1].clone(), z: fs[2].clone() },
         rad: fs[3].clone(),
     })
 }
 
-fn parse_cmd_line(
-    lines: &mut io::Lines<io::BufReader<File>>
-) -> Result<Command, String> {
-    let l = lines.next().ok_or(ran_out_of_lines("line"))?;
-    let l = l.map_err(|e| e.to_string())?;
-    let xs = parse_n_vals(6, l)?;
+fn parse_cmd_line(rest: &str) -> Result<Command, String> {
+    let xs = parse_n_vals(6, rest)?;
     Ok(Command::Line(
         ValPoint3 { x: xs[0].clone(), y: xs[1].clone(), z: xs[2].clone() },
         ValPoint3 { x: xs[3].clone(), y: xs[4].clone(), z: xs[5].clone() }
     ))
 }
 
-fn parse_cmd_triangle(
-    lines: &mut io::Lines<io::BufReader<File>>
-) -> Result<Command, String> {
-    let l = lines.next().ok_or(ran_out_of_lines("line"))?;
-    let l = l.map_err(|e| e.to_string())?;
-    let fs = parse_n_vals(9, l)?;
+fn parse_cmd_triangle(rest: &str) -> Result<Command, String> {
+    let fs = parse_n_vals(9, rest)?;
     Ok(Command::Triangle(
         ValPoint3 { x: fs[0].clone(), y: fs[1].clone(), z: fs[2].clone() },
         ValPoint3 { x: fs[3].clone(), y: fs[4].clone(), z: fs[5].clone() },
@@ -225,12 +210,9 @@ fn parse_cmd_triangle(
     ))
 }
 
-fn parse_cmd_mesh(
-    lines: &mut io::Lines<io::BufReader<File>>
-) -> Result<Command, String> {
-    let l = next(lines)?;
-    let path = l.trim_matches('"');
-    if l.len() - path.len() != 2 { return Err("expected \" enclosed filepath".to_string()); }
+fn parse_cmd_mesh(rest: &str) -> Result<Command, String> {
+    let path = rest.trim_matches('"');
+    if rest.len() - path.len() != 2 { return Err("expected \" enclosed filepath".to_string()); }
     let obj_lines = &mut read_lines(path)
         .map_err(|_| { format!("file \"{}\" does not exist", path) })?;
 
@@ -242,13 +224,13 @@ fn parse_cmd_mesh(
     loop {
         let line = next(obj_lines)?;
         if line == "triangles" { break; }
-        let fs = parse_n_floats(3, line.trim().to_string())?;
+        let fs = parse_n_floats(3, line.trim())?;
         points.push(Point3 { x: fs[0], y: fs[1], z: fs[2] });
     }
     loop {
         match next(obj_lines) {
             Ok(line) => {
-                let xs = parse_n_u8s(3, line.trim().to_string())?;
+                let xs = parse_n_u8s(3, line.trim())?;
                 triangles.push(xs[0] as usize);
                 triangles.push(xs[1] as usize);
                 triangles.push(xs[2] as usize);
@@ -259,44 +241,33 @@ fn parse_cmd_mesh(
     Ok(Command::Mesh { points: points, triangles: triangles })
 }
 
-fn parse_cmd_translate(
-    lines: &mut io::Lines<io::BufReader<File>>
-) -> Result<Command, String> {
-    let l = next(lines)?;
-    let xs = parse_n_vals(3, l)?;
+fn parse_cmd_translate(rest: &str) -> Result<Command, String> {
+    let xs = parse_n_vals(3, rest)?;
     Ok(Command::Translate(xs[0].clone(), xs[1].clone(), xs[2].clone()))
 }
 
-fn parse_cmd_scale(
-    lines: &mut io::Lines<io::BufReader<File>>
-) -> Result<Command, String> {
-    let l = next(lines)?;
-    let xs = parse_n_vals(3, l)?;
+fn parse_cmd_scale(rest: &str) -> Result<Command, String> {
+    let xs = parse_n_vals(3, rest)?;
     Ok(Command::Scale(xs[0].clone(), xs[1].clone(), xs[2].clone()))
 }
 
-fn parse_cmd_rotate(lines: &mut io::Lines<io::BufReader<File>>) -> Result<Command, String> {
-    let xs = parse_n_vals(4, next(lines)?)?;
+fn parse_cmd_rotate(rest: &str) -> Result<Command, String> {
+    let xs = parse_n_vals(4, rest)?;
     Ok(Command::Rotate{
         theta: xs[0].clone(),
         v: ValPoint3 { x: xs[1].clone(), y: xs[2].clone(), z: xs[3].clone() }
     })
 }
 
-fn parse_cmd_color(
-    lines: &mut io::Lines<io::BufReader<File>>
-) -> Result<Command, String> {
-    let xs = parse_n_u8s(3, next(lines)?)?;
+fn parse_cmd_color(rest: &str) -> Result<Command, String> {
+    let xs = parse_n_u8s(3, rest)?;
     Ok(Command::Color(Color { r: xs[0], g: xs[1], b: xs[2] }))
 }
 
-fn parse_cmd_animate(
-    lines: &mut io::Lines<io::BufReader<File>>
-) -> Result<(String, Animation), String> {
-    let l = next(lines)?;
-    let (var, rest) = l.split_once(" ")
+fn parse_cmd_animate(rest: &str) -> Result<(String, Animation), String> {
+    let (var, rest) = rest.split_once(" ")
         .ok_or("line does not have a first thing")?;
-    let xs = parse_n_floats(4, rest.to_string())?;
+    let xs = parse_n_floats(4, rest)?;
     Ok((
         var.to_string(),
         Animation { from: xs[0], to: xs[1], t1: xs[2], t2: xs[3]}))
@@ -304,7 +275,7 @@ fn parse_cmd_animate(
 
 fn parse_n_u8s(
     n: usize,
-    line: String,
+    line: &str,
 ) -> Result<Vec<u8>, String> {
     let xs: Vec<u8> = line.split(" ")
         .map(|s| s.parse())
@@ -318,7 +289,7 @@ fn parse_n_u8s(
 
 fn parse_n_floats(
     n: usize,
-    line: String,
+    line: &str,
 ) -> Result<Vec<f32>, String> {
     let xs: Vec<f32> = line.split(" ")
         .filter(|s| !s.is_empty())
@@ -333,7 +304,7 @@ fn parse_n_floats(
 
 fn parse_n_vals(
     n: usize,
-    line: String,
+    line: &str,
 ) -> Result<Vec<Val>, String> {
     let xs: Vec<Val> = line.split(" ")
         .map(|s| s.parse()

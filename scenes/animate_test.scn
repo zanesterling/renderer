@@ -1,54 +1,31 @@
-translate
-400 300 0
+TRANSLATE 400 300 0
 
-animate
-slide -200 200 0 2.25
-animate
-slide_back 200 -200 0 2.25
-animate
-slide 200 -200 2.75 5
-animate
-slide_back -200 200 2.75 5
+ANIMATE slide -200 200 0 2.25
+ANIMATE slide_back 200 -200 0 2.25
+ANIMATE slide 200 -200 2.75 5
+ANIMATE slide_back -200 200 2.75 5
 
-point
-slide_back 200 0 10
-point
-slide -200 0 10
-point
-200 slide 0 10
-point
--200 slide_back 0 10
+POINT slide_back 200 0 10
+POINT slide -200 0 10
+POINT 200 slide 0 10
+POINT -200 slide_back 0 10
 
 
 
-animate
-theta 0 3.141 0 2.25
-animate
-theta 3.141 0 2.75 5
-animate
-phi 0 12.564 0 2.25
-animate
-phi 12.564 0 2.75 5
-animate
-scale_factor 1 2 0 2.25
-animate
-scale_factor 2 1 2.75 5
+ANIMATE theta 0 3.141 0 2.25
+ANIMATE theta 3.141 0 2.75 5
+ANIMATE phi 0 12.564 0 2.25
+ANIMATE phi 12.564 0 2.75 5
+ANIMATE scale_factor 1 2 0 2.25
+ANIMATE scale_factor 2 1 2.75 5
 
-identity
-rotate
-phi 0 0 1
-rotate
-theta 0 1 0
-scale
-scale_factor scale_factor scale_factor
-translate
-400 300 0
+IDENTITY
+ROTATE phi 0 0 1
+ROTATE theta 0 1 0
+SCALE scale_factor scale_factor scale_factor
+TRANSLATE 400 300 0
 
-triangle
--10 -10 0 -60 -10 0 -10 -60 0
-triangle
-10 -10 0 60 -10 0 10 -60 0
-triangle
--10 10 0 -60 10 0 -10 60 0
-triangle
-10 10 0 60 10 0 10 60 0
+TRIANGLE -10 -10 0 -60 -10 0 -10 -60 0
+TRIANGLE 10 -10 0 60 -10 0 10 -60 0
+TRIANGLE -10 10 0 -60 10 0 -10 60 0
+TRIANGLE 10 10 0 60 10 0 10 60 0
