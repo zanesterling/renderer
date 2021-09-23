@@ -2,17 +2,39 @@ translate
 400 300 0
 
 animate
-x -200 200 0 3
+slide -200 200 0 2.25
+animate
+slide_back 200 -200 0 2.25
+animate
+slide 200 -200 2.75 5
+animate
+slide_back -200 200 2.75 5
 
 point
-x 0 0 10
+slide_back 200 0 10
+point
+slide -200 0 10
+point
+200 slide 0 10
+point
+-200 slide_back 0 10
+
+
 
 animate
-theta 0 6.2831858 0 5
+theta 0 3.14159 0 2.25
+animate
+theta 3.14159 0 2.75 5
+animate
+scale_factor 1 2 0 2.25
+animate
+scale_factor 2 1 2.75 5
 
 identity
 rotate
 theta 0 0 1
+scale
+scale_factor scale_factor scale_factor
 translate
 400 300 0
 

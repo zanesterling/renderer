@@ -21,15 +21,15 @@ struct Animation {
 
 impl Animation {
     fn overlaps(&self, other: &Animation) -> bool {
-        (self.t1 <= other.t1 && other.t1 <= self.t2) ||
-        (self.t1 <= other.t2 && other.t2 <= self.t2) ||
-        (other.t1 <= self.t1 && self.t1 <= other.t2) ||
-        (other.t1 <= self.t2 && self.t2 <= other.t2)
+        (self.t1 < other.t1 && other.t1 < self.t2) ||
+        (self.t1 < other.t2 && other.t2 < self.t2) ||
+        (other.t1 < self.t1 && self.t1 < other.t2) ||
+        (other.t1 < self.t2 && self.t2 < other.t2)
     }
 }
 
 impl Scene {
-    pub fn eval_at(&self, time: f32, val: &Val) -> Result<f32, String> {
+    fn eval_at(&self, time: f32, val: &Val) -> Result<f32, String> {
         let var = match val {
             Val::Raw(x) => return Ok(*x),
             Val::Var(s) => s,
@@ -60,6 +60,30 @@ impl Scene {
     }
 }
 
+pub trait Eval {
+    type Out;
+    fn eval_at(&self, time: f32, scene: &Scene) -> Result<Self::Out, String>;
+}
+
+impl Eval for Val {
+    type Out = f32;
+    fn eval_at(&self, t: f32, scene: &Scene) -> Result<Self::Out, String> {
+        scene.eval_at(t, self)
+    }
+}
+
+impl Eval for ValPoint3 {
+    type Out = Point3;
+    fn eval_at(&self, t: f32, scene: &Scene) ->  Result<Self::Out, String> {
+        Ok(Point3 {
+            x: self.x.eval_at(t, scene)?,
+            y: self.y.eval_at(t, scene)?,
+            z: self.z.eval_at(t, scene)?,
+        })
+    }
+}
+
+
 fn lerp(y1: f32, y2: f32, t: f32) -> f32 {
     y1 * (1.0-t) + y2 * t
 }
@@ -72,15 +96,26 @@ pub enum Val {
 }
 
 #[derive(Debug)]
+pub struct ValPoint3 {
+    x: Val,
+    y: Val,
+    z: Val
+}
+
+// ====================================================================== //
+// ============================== COMMANDS ============================== //
+// ====================================================================== //
+
+#[derive(Debug)]
 pub enum Command {
-    Point { x: Val, y: Val, z: Val, rad: Val },
-    Line(Point3, Point3),
-    Triangle(Point3, Point3, Point3),
+    Point { p: ValPoint3, rad: Val },
+    Line(ValPoint3, ValPoint3),
+    Triangle(ValPoint3, ValPoint3, ValPoint3),
 
     Identity,
-    Translate(f32, f32, f32),
-    Scale(f32, f32, f32),
-    Rotate { theta: Val, vx: Val, vy: Val, vz: Val },
+    Translate(Val, Val, Val),
+    Scale(Val, Val, Val),
+    Rotate { theta: Val, v: ValPoint3 },
 
     Color(Color),
 }
@@ -158,9 +193,7 @@ fn parse_cmd_point(
     let line = line.map_err(|e| e.to_string())?;
     let fs = parse_n_vals(4, line)?;
     Ok(Command::Point{
-        x: fs[0].clone(),
-        y: fs[1].clone(),
-        z: fs[2].clone(),
+        p: ValPoint3{ x: fs[0].clone(), y: fs[1].clone(), z: fs[2].clone() },
         rad: fs[3].clone(),
     })
 }
@@ -170,10 +203,10 @@ fn parse_cmd_line(
 ) -> Result<Command, String> {
     let l = lines.next().ok_or(ran_out_of_lines("line"))?;
     let l = l.map_err(|e| e.to_string())?;
-    let fs = parse_n_floats(6, l)?;
+    let xs = parse_n_vals(6, l)?;
     Ok(Command::Line(
-        Point3 { x: fs[0], y: fs[1], z: fs[2] },
-        Point3 { x: fs[3], y: fs[4], z: fs[5] }
+        ValPoint3 { x: xs[0].clone(), y: xs[1].clone(), z: xs[2].clone() },
+        ValPoint3 { x: xs[3].clone(), y: xs[4].clone(), z: xs[5].clone() }
     ))
 }
 
@@ -182,11 +215,11 @@ fn parse_cmd_triangle(
 ) -> Result<Command, String> {
     let l = lines.next().ok_or(ran_out_of_lines("line"))?;
     let l = l.map_err(|e| e.to_string())?;
-    let fs = parse_n_floats(9, l)?;
+    let fs = parse_n_vals(9, l)?;
     Ok(Command::Triangle(
-        Point3 { x: fs[0], y: fs[1], z: fs[2] },
-        Point3 { x: fs[3], y: fs[4], z: fs[5] },
-        Point3 { x: fs[6], y: fs[7], z: fs[8] }
+        ValPoint3 { x: fs[0].clone(), y: fs[1].clone(), z: fs[2].clone() },
+        ValPoint3 { x: fs[3].clone(), y: fs[4].clone(), z: fs[5].clone() },
+        ValPoint3 { x: fs[6].clone(), y: fs[7].clone(), z: fs[8].clone() }
     ))
 }
 
@@ -195,8 +228,8 @@ fn parse_cmd_translate(
 ) -> Result<Command, String> {
     let l = lines.next().ok_or(ran_out_of_lines("line"))?;
     let l = l.map_err(|e| e.to_string())?;
-    let xs = parse_n_floats(3, l)?;
-    Ok(Command::Translate(xs[0], xs[1], xs[2]))
+    let xs = parse_n_vals(3, l)?;
+    Ok(Command::Translate(xs[0].clone(), xs[1].clone(), xs[2].clone()))
 }
 
 fn parse_cmd_scale(
@@ -204,17 +237,15 @@ fn parse_cmd_scale(
 ) -> Result<Command, String> {
     let l = lines.next().ok_or(ran_out_of_lines("line"))?;
     let l = l.map_err(|e| e.to_string())?;
-    let xs = parse_n_floats(3, l)?;
-    Ok(Command::Scale(xs[0], xs[1], xs[2]))
+    let xs = parse_n_vals(3, l)?;
+    Ok(Command::Scale(xs[0].clone(), xs[1].clone(), xs[2].clone()))
 }
 
 fn parse_cmd_rotate(lines: &mut io::Lines<io::BufReader<File>>) -> Result<Command, String> {
     let xs = parse_n_vals(4, next_line(lines)?)?;
     Ok(Command::Rotate{
         theta: xs[0].clone(),
-        vx: xs[1].clone(),
-        vy: xs[2].clone(),
-        vz: xs[3].clone()
+        v: ValPoint3 { x: xs[1].clone(), y: xs[2].clone(), z: xs[3].clone() }
     })
 }
 

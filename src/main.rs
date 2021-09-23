@@ -4,7 +4,9 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use std::time::{Instant};
 
+#[allow(dead_code)]
 mod data;
+
 mod draw;
 mod parser;
 mod transform;
@@ -86,6 +88,7 @@ fn draw_scene(
         data::PointScreen { x: p.x as isize, y: p.y as isize }
     }
     use crate::parser::Command;
+    use crate::parser::Eval;
 
     screen.clear();
 
@@ -94,40 +97,48 @@ fn draw_scene(
 
     for cmd in &scene.commands {
         match cmd {
-            Command::Point { x, y, z, rad } => {
-                let rad = scene.eval_at(t, rad)?;
-                let p = data::Point3{
-                    x: scene.eval_at(t, x)?,
-                    y: scene.eval_at(t, y)?,
-                    z: scene.eval_at(t, z)?
-                };
+            Command::Point { p, rad } => {
+                let rad = rad.eval_at(t, scene)?;
+                let p = p.eval_at(t, scene)?;
                 draw::draw_point(screen, ps(tr*p), rad as usize, color)
             },
-            Command::Line(p1, p2) =>
-                draw::draw_line(screen, ps(tr*(*p1)), ps(tr*(*p2)), color),
-            Command::Triangle(p1, p2, p3) =>
+            Command::Line(p1, p2) => {
+                let p1 = p1.eval_at(t, scene)?;
+                let p2 = p2.eval_at(t, scene)?;
+                draw::draw_line(screen, ps(tr*p1), ps(tr*p2), color)
+            },
+            Command::Triangle(p1, p2, p3) => {
+                let p1 = p1.eval_at(t, scene)?;
+                let p2 = p2.eval_at(t, scene)?;
+                let p3 = p3.eval_at(t, scene)?;
                 draw::draw_triangle(
                     screen,
-                    ps(tr*(*p1)), ps(tr*(*p2)), ps(tr*(*p3)),
-                    color),
+                    ps(tr*p1), ps(tr*p2), ps(tr*p3),
+                    color);
+            },
 
-            Command::Scale(x, y, z) =>
-                tr = Transform::scale(*x, *y, *z) * tr,
-            Command::Translate(x, y, z) =>
-                tr = Transform::translate(*x, *y, *z) * tr,
-            Command::Rotate { theta, vx, vy, vz } => {
-                let theta = scene.eval_at(t, theta)?;
-                let v = data::Point3{
-                    x: scene.eval_at(t, vx)?,
-                    y: scene.eval_at(t, vy)?,
-                    z: scene.eval_at(t, vz)?
-                };
-                tr = Transform::rotate(theta, v) * tr
+            Command::Scale(x, y, z) => {
+                let x = x.eval_at(t, scene)?;
+                let y = y.eval_at(t, scene)?;
+                let z = z.eval_at(t, scene)?;
+                tr = Transform::scale(x, y, z) * tr;
+            },
+            Command::Translate(x, y, z) => {
+                let x = x.eval_at(t, scene)?;
+                let y = y.eval_at(t, scene)?;
+                let z = z.eval_at(t, scene)?;
+                tr = Transform::translate(x, y, z) * tr;
+            },
+            Command::Rotate { theta, v } => {
+                let theta = theta.eval_at(t, scene)?;
+                let v = v.eval_at(t, scene)?;
+                tr = Transform::rotate(theta, v) * tr;
             },
             Command::Identity => tr = Transform::IDENTITY,
 
             Command::Color(c) => color = *c,
 
+            #[allow(unreachable_patterns)]
             _ => return Err(format!("command not implemented: {:?}", cmd))
         }
     }
