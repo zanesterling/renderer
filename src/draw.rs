@@ -148,16 +148,6 @@ pub fn draw_triangle(
 
     fill_flat_top_tri(screen, bot, mid, mid2, color);
     fill_flat_bot_tri(screen, top, mid, mid2, color);
-
-    draw_line(screen, bot, top, color);
-    draw_line(screen, bot, mid, color);
-    draw_line(screen, mid, top, color);
-    draw_line(screen, mid, mid2, color);
-
-    draw_point(screen, top, 3, Color::RED);
-    draw_point(screen, mid, 3, Color::GREEN);
-    draw_point(screen, mid2, 3, Color::GREEN);
-    draw_point(screen, bot, 3, Color::BLUE);
 }
 
 fn fill_flat_top_tri(
