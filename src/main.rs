@@ -16,7 +16,7 @@ use crate::transform::Transform;
 const SCR_W: u32 = 800;
 const SCR_H: u32 = 600;
 
-const SCENE_PATH: &str = "./scenes/animate_test.scn";
+const SCENE_PATH: &str = "./scenes/mesh_test.scn";
 
 fn main() {
     let sdl_context = sdl2::init().unwrap();
@@ -115,6 +115,20 @@ fn draw_scene(
                     screen,
                     ps(tr*p1), ps(tr*p2), ps(tr*p3),
                     color);
+            },
+            Command::Mesh{ points, triangles } => {
+                let mut pts: Vec<data::PointScreen> = Vec::with_capacity(points.len());
+                for pt in points {
+                    pts.push(ps(tr*(*pt)));
+                }
+                for i in 0..triangles.len() / 3 {
+                    draw::draw_triangle(
+                        screen,
+                        pts[triangles[i*3 + 0]],
+                        pts[triangles[i*3 + 1]],
+                        pts[triangles[i*3 + 2]],
+                        color);
+                }
             },
 
             Command::Scale(x, y, z) => {

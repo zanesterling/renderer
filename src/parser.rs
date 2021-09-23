@@ -2,8 +2,8 @@ use crate::data::*;
 
 use std::fs::File;
 use std::io::{self, BufRead};
-use std::path::Path;
 use std::collections::HashMap;
+use std::path::Path;
 
 #[derive(Debug)]
 pub struct Scene {
@@ -111,6 +111,7 @@ pub enum Command {
     Point { p: ValPoint3, rad: Val },
     Line(ValPoint3, ValPoint3),
     Triangle(ValPoint3, ValPoint3, ValPoint3),
+    Mesh { points: Vec<Point3>, triangles: Vec<usize> },
 
     Identity,
     Translate(Val, Val, Val),
@@ -145,6 +146,7 @@ pub fn load_scene(path: &str) -> Result<Scene, String> {
             "point"    => commands.push(parse_cmd_point(&mut lines)?),
             "line"     => commands.push(parse_cmd_line(&mut lines)?),
             "triangle" => commands.push(parse_cmd_triangle(&mut lines)?),
+            "mesh"     => commands.push(parse_cmd_mesh(&mut lines)?),
 
             "identity"  => commands.push(Command::Identity),
             "translate" => commands.push(parse_cmd_translate(&mut lines)?),
@@ -223,11 +225,44 @@ fn parse_cmd_triangle(
     ))
 }
 
+fn parse_cmd_mesh(
+    lines: &mut io::Lines<io::BufReader<File>>
+) -> Result<Command, String> {
+    let l = next(lines)?;
+    let path = l.trim_matches('"');
+    if l.len() - path.len() != 2 { return Err("expected \" enclosed filepath".to_string()); }
+    let obj_lines = &mut read_lines(path)
+        .map_err(|_| { format!("file \"{}\" does not exist", path) })?;
+
+    let mut points = vec![];
+    let mut triangles = vec![];
+
+    let line = next(obj_lines)?;
+    if line != "points" { return Err("expected first line to be \"points\"".to_string()); }
+    loop {
+        let line = next(obj_lines)?;
+        if line == "triangles" { break; }
+        let fs = parse_n_floats(3, line.trim().to_string())?;
+        points.push(Point3 { x: fs[0], y: fs[1], z: fs[2] });
+    }
+    loop {
+        match next(obj_lines) {
+            Ok(line) => {
+                let xs = parse_n_u8s(3, line.trim().to_string())?;
+                triangles.push(xs[0] as usize);
+                triangles.push(xs[1] as usize);
+                triangles.push(xs[2] as usize);
+            },
+            _ => break
+        }
+    }
+    Ok(Command::Mesh { points: points, triangles: triangles })
+}
+
 fn parse_cmd_translate(
     lines: &mut io::Lines<io::BufReader<File>>
 ) -> Result<Command, String> {
-    let l = lines.next().ok_or(ran_out_of_lines("line"))?;
-    let l = l.map_err(|e| e.to_string())?;
+    let l = next(lines)?;
     let xs = parse_n_vals(3, l)?;
     Ok(Command::Translate(xs[0].clone(), xs[1].clone(), xs[2].clone()))
 }
@@ -235,14 +270,13 @@ fn parse_cmd_translate(
 fn parse_cmd_scale(
     lines: &mut io::Lines<io::BufReader<File>>
 ) -> Result<Command, String> {
-    let l = lines.next().ok_or(ran_out_of_lines("line"))?;
-    let l = l.map_err(|e| e.to_string())?;
+    let l = next(lines)?;
     let xs = parse_n_vals(3, l)?;
     Ok(Command::Scale(xs[0].clone(), xs[1].clone(), xs[2].clone()))
 }
 
 fn parse_cmd_rotate(lines: &mut io::Lines<io::BufReader<File>>) -> Result<Command, String> {
-    let xs = parse_n_vals(4, next_line(lines)?)?;
+    let xs = parse_n_vals(4, next(lines)?)?;
     Ok(Command::Rotate{
         theta: xs[0].clone(),
         v: ValPoint3 { x: xs[1].clone(), y: xs[2].clone(), z: xs[3].clone() }
@@ -252,27 +286,20 @@ fn parse_cmd_rotate(lines: &mut io::Lines<io::BufReader<File>>) -> Result<Comman
 fn parse_cmd_color(
     lines: &mut io::Lines<io::BufReader<File>>
 ) -> Result<Command, String> {
-    let xs = parse_n_u8s(3, next_line(lines)?)?;
+    let xs = parse_n_u8s(3, next(lines)?)?;
     Ok(Command::Color(Color { r: xs[0], g: xs[1], b: xs[2] }))
 }
 
 fn parse_cmd_animate(
     lines: &mut io::Lines<io::BufReader<File>>
 ) -> Result<(String, Animation), String> {
-    let l = next_line(lines)?;
+    let l = next(lines)?;
     let (var, rest) = l.split_once(" ")
         .ok_or("line does not have a first thing")?;
     let xs = parse_n_floats(4, rest.to_string())?;
     Ok((
         var.to_string(),
         Animation { from: xs[0], to: xs[1], t1: xs[2], t2: xs[3]}))
-}
-
-fn next_line(
-    lines: &mut io::Lines<io::BufReader<File>>
-) -> Result<String, String> {
-    let l = lines.next().ok_or(ran_out_of_lines("line"))?;
-    l.map_err(|e| e.to_string())
 }
 
 fn parse_n_u8s(
@@ -294,7 +321,8 @@ fn parse_n_floats(
     line: String,
 ) -> Result<Vec<f32>, String> {
     let xs: Vec<f32> = line.split(" ")
-        .map(|s| s.parse())
+        .filter(|s| !s.is_empty())
+        .map(|s| s.parse().map_err(|e| format!("parsing \"{}\": {}", s, e)))
         .collect::<Result<Vec<f32>, _>>()
         .map_err(|e| e.to_string())?;
     if xs.len() == n {
@@ -323,4 +351,9 @@ fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
 where P: AsRef<Path>, {
     let file = File::open(filename)?;
     Ok(io::BufReader::new(file).lines())
+}
+
+fn next(lines: &mut io::Lines<io::BufReader<File>>) -> Result<String, String> {
+    lines.next().ok_or(ran_out_of_lines("line"))?
+        .map_err(|e| e.to_string())
 }

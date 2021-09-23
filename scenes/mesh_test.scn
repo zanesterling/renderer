@@ -1,0 +1,12 @@
+animate
+theta 0 12.5664 0 5
+
+scale
+50 50 50
+rotate
+theta 1 1 0
+translate
+400 300 0
+
+mesh
+"meshes/cube.obj"

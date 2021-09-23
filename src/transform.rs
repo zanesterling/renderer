@@ -47,6 +47,7 @@ impl Transform {
         ]};
         if v.x == 0.0 && v.y == 0.0 { return rot_around_z; }
 
+        let v = v * (1.0 / v.magnitude());
         // Transform from x,y,z basis to a basis where `v` lies along the z
         // axis. Source: http://scipp.ucsc.edu/~haber/ph216/rotation_12.pdf
         let vmag = (v.x*v.x + v.y*v.y).sqrt();
