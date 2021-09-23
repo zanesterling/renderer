@@ -115,6 +115,15 @@ fn draw_scene(
                 tr = Transform::scale(*x, *y, *z) * tr,
             Command::Translate(x, y, z) =>
                 tr = Transform::translate(*x, *y, *z) * tr,
+            Command::Rotate { theta, vx, vy, vz } => {
+                let theta = scene.eval_at(t, theta)?;
+                let v = data::Point3{
+                    x: scene.eval_at(t, vx)?,
+                    y: scene.eval_at(t, vy)?,
+                    z: scene.eval_at(t, vz)?
+                };
+                tr = Transform::rotate(theta, v) * tr
+            },
             Command::Identity => tr = Transform::IDENTITY,
 
             Command::Color(c) => color = *c,

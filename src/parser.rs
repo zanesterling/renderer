@@ -80,7 +80,7 @@ pub enum Command {
     Identity,
     Translate(f32, f32, f32),
     Scale(f32, f32, f32),
-    // Rotate(Point3, f32),
+    Rotate { theta: Val, vx: Val, vy: Val, vz: Val },
 
     Color(Color),
 }
@@ -208,7 +208,15 @@ fn parse_cmd_scale(
     Ok(Command::Scale(xs[0], xs[1], xs[2]))
 }
 
-fn parse_cmd_rotate(_lines: &mut io::Lines<io::BufReader<File>>) -> Result<Command, String> { unimplemented!() }
+fn parse_cmd_rotate(lines: &mut io::Lines<io::BufReader<File>>) -> Result<Command, String> {
+    let xs = parse_n_vals(4, next_line(lines)?)?;
+    Ok(Command::Rotate{
+        theta: xs[0].clone(),
+        vx: xs[1].clone(),
+        vy: xs[2].clone(),
+        vz: xs[3].clone()
+    })
+}
 
 fn parse_cmd_color(
     lines: &mut io::Lines<io::BufReader<File>>

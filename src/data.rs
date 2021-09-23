@@ -20,6 +20,23 @@ pub struct Point3 {
     pub z: f32,
 }
 
+impl Point3 {
+    pub fn magnitude(&self) -> f32 {
+        (self.x*self.x + self.y*self.y + self.z*self.z).sqrt()
+    }
+}
+
+impl std::ops::Mul<f32> for Point3 {
+    type Output = Point3;
+    fn mul(self, x: f32) -> Self::Output {
+        Point3 {
+            x: self.x * x,
+            y: self.y * x,
+            z: self.z * x,
+        }
+    }
+}
+
 #[derive(Debug, Copy, Clone)]
 pub struct Point2 {
     pub x: f32,

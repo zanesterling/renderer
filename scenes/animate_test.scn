@@ -1,5 +1,26 @@
+translate
+400 300 0
+
 animate
-x 200 600 0 3
+x -200 200 0 3
 
 point
-x 300 0 10
+x 0 0 10
+
+animate
+theta 0 6.2831858 0 5
+
+identity
+rotate
+theta 0 0 1
+translate
+400 300 0
+
+triangle
+-10 -10 0 -60 -10 0 -10 -60 0
+triangle
+10 -10 0 60 -10 0 10 -60 0
+triangle
+-10 10 0 -60 10 0 -10 60 0
+triangle
+10 10 0 60 10 0 10 60 0

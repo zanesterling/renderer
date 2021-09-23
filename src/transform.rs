@@ -37,6 +37,20 @@ impl Transform {
             ]
         }
     }
+
+    pub fn rotate(th: f32, v: Point3) -> Transform {
+        // TODO: Generalize to rotations around an aribtrary vector,
+        // at some point when it is not time to go to bed lmao.
+        let v = v * (1.0 / v.magnitude());
+        Transform {
+            data: [
+                th.cos(), -th.sin(), v.x, 0.0,
+                th.sin(),  th.cos(), v.y, 0.0,
+                     0.0,       0.0, v.z, 0.0,
+                     0.0,       0.0, 0.0, 1.0,
+            ]
+        }
+    }
 }
 
 impl std::ops::Mul<Transform> for Transform {
